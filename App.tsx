@@ -1,30 +1,35 @@
-import { StatusBar } from "expo-status-bar";
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, {useEffect, useState} from "react";
+import { Alert } from "react-native";
+import Loading from "./Loading";
+import * as Location from "expo-location";
+import Weather from "./Weather";
+
+const API_KEY = "8cb0ae6a6d26caf00f700da043a0fff3";
+// api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
+
+
 
 export default function App() {
-    return (
-        <View style={styles.container}>
-            <View style={styles.yellowView}></View>
-            <View style={styles.blueView}></View>
-        </View>
-    );
-}
+    const [isLoading, setLoading] = useState(true);
+    const [data, setData] = useState({});
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#000",
-    },
-    yellowView: {
-        flex: 3,
-        backgroundColor: "yellow",
-    },
-    blueView: {
-        flex: 1,
-        backgroundColor: "blue",
-    },
-    text: {
-        color: "white",
-    },
-});
+    useEffect(() => {
+        getLocation();
+    }, []);
+    
+    async function getLocation() {
+        try {
+            const response = await Location.requestPermissionsAsync();
+            const { coords: {latitude, longitude} } = await Location.getCurrentPositionAsync({});
+            const fetched = await fetch(`http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`);
+            const json = await fetched.json();
+            setData(json);
+            setLoading(false);
+        } catch(err) {
+            Alert.alert("Can't find you.", "So sad");
+        }
+    } 
+
+
+    return (isLoading ? <Loading /> : <Weather data={data}/>);
+}
